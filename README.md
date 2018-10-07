@@ -12,12 +12,14 @@ What is the story that we want to tell to people? What is the problem in the sys
 	- tool to look at risks of having leverage
 	- tool for determining what CDPs to buy? buying CDP vs trying to get it when it liquidates
 	- determine what action to take, and how your position compares to other people (collateralisation, etc)
+	- determine how much DAI / PETH can remove given price changes
 - makerdao to help manage risk
 	- what would happen if parameters changed
 	- if price drops by x, how many CDPs would be underwater
 	- analysis on the network level
 	- how much more DAI can be issued
 	- how much PETH can be reduced
+	= how could the system be more capital efficient?
 - governance, see how varying network parameters will change risk
 
 ## URLS
@@ -144,3 +146,11 @@ The Liquidation Ratio is 150%
 The Stability Debt is 1000 DAI (DAI in circulation)
 
 Find collateralization rate at every operation step before and after it occured
+
+## More Interesting Questions
+- Who is funding CDPs, where is the money orignating form
+- Look at the people who are creating CDPs rather than CDPs by themselves
+- Who are the ones market making (keepers), how many are there how do they interact...
+
+What is the distribution in size of CDPs? and make this relative to time
+- Make a CDP analysis tool in a graph form + compare to others
