@@ -154,3 +154,14 @@ Find collateralization rate at every operation step before and after it occured
 
 What is the distribution in size of CDPs? and make this relative to time
 - Make a CDP analysis tool in a graph form + compare to others
+
+
+## Links
+- https://www.reddit.com/r/MakerDAO/comments/8bw3qj/makerdao_calculations_and_equations/
+- https://www.reddit.com/r/MakerDAO/comments/8efk5q/faq_possibly_everything_you_ever_wanted_to_know/
+- https://dai.makerdao.com/
+- https://cdp-simulator.surge.sh/
+- https://mkr.tools/cdp/768
+- https://developer.makerdao.com/dai/1/graphql/types
+- https://explorer.bounties.network/bounty/1330
+- https://github.com/makerdao/docs/blob/master/Dai.md

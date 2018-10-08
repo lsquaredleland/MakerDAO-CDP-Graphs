@@ -34,8 +34,6 @@
 // });
 
 // Will figure out graphQL later -> start with preloaded data + make visualization
-
-
 const query768actions = `{
   getCup(id: 768) {
     lad
@@ -84,7 +82,7 @@ function ready(err, res) {
 	function generateCollatRatio() {
 		i = 0;
 		l = actions768.length
-		reversed = actions768.reverse();
+		reversed = actions768.slice().reverse();
 		collatRatio = ethPricesConstrained.map((d) => {
 			const r = reversed[i];
 
@@ -105,6 +103,31 @@ function ready(err, res) {
 		return collatRatio
 	}
 
+	function calcLiquidationPrice() {
+		// (Stability Debt * Liquidation Ratio) / (Collateral * PETH/ETH Ratio) = Liquidation Price
+
+		i = 0;
+		l = actions768.length
+		reversed = actions768.slice().reverse();
+		liquidationPrice = ethPricesConstrained.map((d) => {
+			const r = reversed[i];
+
+			if (d.time > Date.parse(r.time)) {
+				i++; // there is a corner case?
+				if (i == l) { i = l - 1}
+			}
+
+			// i is at the max value...
+			liquid = r.art * 1.50 / (r.ink * 1.029)
+			return {
+				price: d.price,
+				time: d.time,
+				liquid: isFinite(liquid) ? liquid : 0,
+			}
+		})
+		return liquidationPrice
+	}
+
 	function maximumDAI() {
 		// to caculate the maximum DAI amount, set liquidation price equal to current price
 		// (Stability Debt * Liquidation Ratio) / (Collateral * PETH/ETH Ratio) = Liquidation Price
@@ -112,15 +135,16 @@ function ready(err, res) {
 
 		i = 0;
 		l = actions768.length
-		reversed = actions768.reverse();
+		reversed = actions768.slice().reverse();
 		maximumDAI = ethPricesConstrained.map((d) => {
 			const r = reversed[i];
 
 			if (d.time > Date.parse(r.time)) {
-				i++; // there is a corner case
+				i++; // there is a corner case?
 				if (i == l) { i = l - 1}
 			}
 
+			// i is at the max value...
 			maxDAI = d.price * r.ink * 1.029 / 1.50
 			return {
 				price: d.price,
@@ -133,7 +157,7 @@ function ready(err, res) {
 		return maximumDAI
 	}
 
-	// The first chart is the points when large amounts of change occured
+	// Amount of PETH outstanding
 	createChart({
 		svgName: "#svg1",
 		data: actions768,
@@ -144,28 +168,19 @@ function ready(err, res) {
 		yLabel: 'Ink / PETH Balance'
 	})
 
-	// DAI Debt Ceiling. Add another chart showing max debt ceiling if at 150%
-	// createChart({
-	// 	svgName: "#svg2",
-	// 	data: actions768,
-	// 	xVar: 'block',
-	// 	xRange,
-	// 	yVar: 'art',
-	// 	xLabel: 'Block Height',
-	// 	yLabel: 'DAI Debt'
-	// })
-
-	// overlay liquidation price here
-	createChart({
-		svgName: "#svg3",
-		data: ethPricesConstrained,
-		xVar: 'time',
-		xRange: xRangeTime,
-		yVar: 'price',
-		xLabel: 'time',
-		yLabel: 'ETH Price (USD)'
+	// DAI issued from CDP vs maximum that could be
+	dualLineChart({
+		svgName: "#svg2",
+		data: [actions768, maximumDAI()],
+		xVar: ['block', 'time'],
+		xRange: [xRange, xRangeTime],
+		yVar: ['art', 'maxDAI'],
+		xLabel: 'Block Height',
+		yLabel: 'DAI Debt'
 	})
-	// Change in ratio
+
+
+	// Change in collateralization ratio (overlay with points when the user changed things)
 	createChart({
 		svgName: "#svg4",
 		data: generateCollatRatio(),
@@ -173,17 +188,18 @@ function ready(err, res) {
 		xRange: xRangeTime,
 		yVar: 'ratio',
 		xLabel: 'time',
-		yLabel: ''
+		yLabel: 'collateral ratio'
 	})
 
+	// ETH prices (to overlay with liquidation prices)
 	dualLineChart({
-		svgName: "#svg2",
-		data: [actions768, maximumDAI()],
-		xVar: 'block',
-		xRange: [xRange, xRangeTime],
-		yVar: ['art', 'maxDAI'],
-		xLabel: 'Block Height',
-		yLabel: 'DAI Debt'
+		svgName: "#svg3",
+		data: [calcLiquidationPrice(), ethPricesConstrained],
+		xVar: ['time', 'time'],
+		xRange: [xRangeTime, xRangeTime],
+		yVar: ['liquid', 'price'],
+		xLabel: 'Time',
+		yLabel: 'ETH Price (USD)'
 	})
 }
 
@@ -239,6 +255,7 @@ function dualLineChart(input) {
 	let [ data1, data2 ] = data
 	let [ xRange1, xRangeTime ] = xRange
 	let [ yVar1, yVar2 ] = yVar
+	let [ xVar1, xVar2 ] = xVar
 
 	console.log('data1', data1, yVar1)
 
@@ -255,7 +272,7 @@ function dualLineChart(input) {
 	    .domain([0, d3.max(data2, (d) => parseInt(d[yVar2]))]).nice()
     	.range([height, margin.top])
 	var line = d3.line()
-	    .x((d) => x(d[xVar]))
+	    .x((d) => x(d[xVar1]))
 	    .y((d) => y(d[yVar1]));
 
 	var x2 = d3.scaleLinear()
@@ -263,7 +280,7 @@ function dualLineChart(input) {
 	x2.domain(xRangeTime);
 
 	var line2 = d3.line()
-	    .x((d) => x2(d["time"]))
+	    .x((d) => x2(d[xVar2]))
 	    .y((d) => y(d[yVar2]));
 
   g.append("g")
